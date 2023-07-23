@@ -13,6 +13,7 @@ from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
 from langchain.utilities import GoogleSearchAPIWrapper
 from langchain.prompts import PromptTemplate
+from langchain.callbacks import get_openai_callback
 
 
 # model_name = gpt-3.5-turbo, text-davinci-003
@@ -86,8 +87,11 @@ agent = initialize_agent(
     max_iterations=6,
 )
 
-response = agent.run("When was Napoleon born?")
-print(response)
 
-response = agent("What's the latest news about the wildfires in Greece? Then summarise the result.")
-print(response)
+with get_openai_callback() as cb:
+	response = agent.run("When was Napoleon born?")
+	print(response)
+        
+	response = agent("What's the latest news about the wildfires in Greece? Then summarise the result.")
+	print(response)
+	print(cb)
