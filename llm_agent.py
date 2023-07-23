@@ -8,9 +8,11 @@ from langchain.vectorstores import DeepLake
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
+from langchain.chains import LLMChain
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
 from langchain.utilities import GoogleSearchAPIWrapper
+from langchain.prompts import PromptTemplate
 
 
 # model_name = gpt-3.5-turbo, text-davinci-003
@@ -52,16 +54,27 @@ search = GoogleSearchAPIWrapper(
     google_api_key=os.getenv("GOOGLE_API_KEY"), google_cse_id=os.getenv("GOOGLE_CSE_ID")
 )
 
+prompt = PromptTemplate(
+    input_variables=["query"], template="Write a summary of the following text: {query}"
+)
+
+summarize_chain = LLMChain(llm=llm, prompt=prompt)
+
 tools = [
     Tool(
         name="Google search",
-        description="Useful for answering questions about current events.",
+        description="useful for answering questions about current events.",
         func=search.run,
     ),
     Tool(
-        name="Date of birth",
+        name="Date of birth finder",
         func=retrieval_qa.run,
-        description="Useful for finding date of births.",
+        description="useful for finding date of births.",
+    ),
+    Tool(
+        name="Summarizer",
+        func=summarize_chain.run,
+        description="useful for summarizing texts to specific number of words",
     ),
 ]
 
@@ -76,6 +89,5 @@ agent = initialize_agent(
 response = agent.run("When was Napoleon born?")
 print(response)
 
-
-response = agent("What's the latest news about the wildfires in Greece?")
-print(response["output"])
+response = agent("What's the latest news about the wildfires in Greece? Then summarise the result.")
+print(response)
