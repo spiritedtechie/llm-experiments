@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 
-load_dotenv('.env')
+load_dotenv(".env")
 
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import DeepLake
@@ -10,54 +10,72 @@ from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
 from langchain.agents import initialize_agent, Tool
 from langchain.agents import AgentType
+from langchain.utilities import GoogleSearchAPIWrapper
+
 
 # model_name = gpt-3.5-turbo, text-davinci-003
-llm = OpenAI(model_name="text-davinci-003", temperature=0, openai_api_key=os.getenv("OPENAI_API_KEY"))
+llm = OpenAI(
+    model_name="text-davinci-003",
+    temperature=0,
+    openai_api_key=os.getenv("OPENAI_API_KEY"),
+)
 
 # deep lake dataset
-storeDocuments=False # change me
+storeDocuments = False  # change me
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
-my_activeloop_org_id = os.getenv("ACTIVE_LOOP_ORG_ID") 
+my_activeloop_org_id = os.getenv("ACTIVE_LOOP_ORG_ID")
 my_activeloop_dataset_name = "langchain_course_from_zero_to_hero"
 dataset_path = f"hub://{my_activeloop_org_id}/{my_activeloop_dataset_name}"
 db = DeepLake(dataset_path=dataset_path, embedding_function=embeddings)
 
-# 
+#
 # Store some documents as embeddings in deep lake
 #
-if (storeDocuments == True):
-	texts = [
-		"Napoleon Bonaparte was born in 15 August 1769",
-		"Louis XIV was born in 5 September 1638"
-	]
-	docs = text_splitter.create_documents(texts)
-	db.add_documents(docs)
+if storeDocuments == True:
+    texts = [
+        "Napoleon Bonaparte was born in 15 August 1769",
+        "Louis XIV was born in 5 September 1638",
+    ]
+    docs = text_splitter.create_documents(texts)
+    db.add_documents(docs)
 
 
 #
-# Agent that uses the RetrievalQA chain as a tool
+# Agent that uses the deeplake as a retrieval tool
 #
 retrieval_qa = RetrievalQA.from_chain_type(
-	llm=llm,
-	chain_type="stuff",
-	retriever=db.as_retriever()
+    llm=llm, chain_type="stuff", retriever=db.as_retriever()
+)
+
+search = GoogleSearchAPIWrapper(
+    google_api_key=os.getenv("GOOGLE_API_KEY"), google_cse_id=os.getenv("GOOGLE_CSE_ID")
 )
 
 tools = [
     Tool(
-        name="Retrieval QA System",
+        name="Google search",
+        description="Useful for answering questions about current events.",
+        func=search.run,
+    ),
+    Tool(
+        name="Date of birth",
         func=retrieval_qa.run,
-        description="Useful for answering questions."
+        description="Useful for finding date of births.",
     ),
 ]
 
 agent = initialize_agent(
-	tools,
-	llm,
-	agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-	verbose=True
+    tools,
+    llm,
+    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    verbose=True,
+    max_iterations=6,
 )
 
-response = agent.run("When was Napoleone born?")
+response = agent.run("When was Napoleon born?")
 print(response)
+
+
+response = agent("What's the latest news about the wildfires in Greece?")
+print(response["output"])
