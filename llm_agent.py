@@ -14,14 +14,21 @@ from langchain.agents import AgentType
 from langchain.utilities import GoogleSearchAPIWrapper
 from langchain.prompts import PromptTemplate
 from langchain.callbacks import get_openai_callback
+from langchain.chat_models import ChatOpenAI
 
 
 # model_name = gpt-3.5-turbo, text-davinci-003
-llm = OpenAI(
-    model_name="text-davinci-003",
+# llm = OpenAI(
+#     model_name="text-davinci-003",
+#     temperature=0,
+#     openai_api_key=os.getenv("OPENAI_API_KEY"),
+# )
+llm = ChatOpenAI(
+    model_name="gpt-3.5-turbo",
     temperature=0,
     openai_api_key=os.getenv("OPENAI_API_KEY"),
 )
+# llm = ChatOpenAI(model_name='gpt-4')
 
 # deep lake dataset
 storeDocuments = False  # change me

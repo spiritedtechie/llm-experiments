@@ -8,8 +8,8 @@ load_dotenv(".env")
 template = """Question: {question}
 
 Answer: """
-prompt = PromptTemplate(template=template, input_variables=["question"])
 
+prompt = PromptTemplate(template=template, input_variables=["question"])
 
 oneQuestion = "What is the capital city of India?"
 
