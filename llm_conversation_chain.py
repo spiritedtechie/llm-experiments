@@ -7,6 +7,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.llms import OpenAI
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
+from langchain.callbacks import get_openai_callback
 
 
 # model_name = gpt-3.5-turbo, text-davinci-003
@@ -21,7 +22,12 @@ conversation = ConversationChain(
     verbose=True,
     memory=ConversationBufferMemory()
 )
-conversation.predict(input="Tell me about yourself.")
-conversation.predict(input="What can you do?")
-conversation.predict(input="How can you help me with data analysis?")
-print(conversation)
+
+with get_openai_callback() as cb:
+    conversation.predict(input="Tell me about yourself.")
+    conversation.predict(input="What can you do?")
+    conversation.predict(input="What can you tell me about the book 100 years of solitude")
+    conversation.predict(input="What else can you tell me about the book")
+    conversation.predict(input="Thanks for your help")
+    print(cb)
+

@@ -94,6 +94,8 @@ agent = initialize_agent(
     max_iterations=6,
 )
 
+agent.verbose = True
+
 
 with get_openai_callback() as cb:
 	response = agent.run("When was Napoleon born?")
